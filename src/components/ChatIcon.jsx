@@ -7,8 +7,8 @@ const ChatIcon = ({ onClick, isOpen }) => {
   return (
     <button
       onClick={onClick}
-      className={`fixed bottom-4 right-4 md:bottom-6 md:right-6 w-14 h-14 bg-blue-600 text-white rounded-full hover:bg-blue-700 hover:scale-110 transition-all duration-200 flex items-center justify-center cursor-pointer z-50 ${
-        isOpen ? 'rotate-180' : ''
+      className={`fixed bottom-4 right-4 md:bottom-6 md:right-6 w-14 h-14 bg-blue-600 text-white rounded-full hover:bg-blue-700 hover:scale-110 transition-all duration-200 items-center justify-center cursor-pointer z-50 ${
+        isOpen ? 'hidden md:flex rotate-180' : 'flex'
       }`}
       aria-label="Toggle chat"
     >

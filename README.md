@@ -2,6 +2,8 @@
 
 An embeddable chat widget that acts as a "UI librarian" for component libraries. The chatbot supports streaming responses and can render live, interactive UI components based on user queries.
 
+Demo App: https://bujo-chat.harishiv.cv/
+
 ## 🚀 Features
 
 - **Embeddable Widget**: Self-contained component (`<UiLibraryAssistant />`) that can be dropped into any documentation or component library site

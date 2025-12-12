@@ -32,7 +32,7 @@ Demo App: https://bujo-chat.harishiv.cv/
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
+git clone https://github.com/graphicstone/bujo-chat.git
 cd bujo-chat
 ```
 
@@ -100,7 +100,7 @@ src/
 │       └── ChatExamples.jsx
 ├── contexts/
 │   ├── toastContext.js           # Toast context definition
-│   └── ToastContext.jsx          # Toast provider component
+│   └── ToastContextProvider.jsx  # Toast provider component
 ├── hooks/
 │   └── useToast.js               # Custom hook for toast notifications
 ├── services/

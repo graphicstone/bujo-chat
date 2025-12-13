@@ -4,9 +4,10 @@
  * Handles chat state, streaming, and persistence
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { lazy, Suspense, useState, useEffect, useCallback } from 'react';
 import ChatIcon from './ChatIcon';
-import ChatPanel from './ChatPanel';
+// Lazy load ChatPanel for bundle splitting—only loaded when chat is open
+const ChatPanel = lazy(() => import('./ChatPanel'));
 import { streamResponse } from '../services/mockStreamingAPI';
 import { saveChatHistory, loadChatHistory } from '../services/storageService';
 import { parseStreamedAssistantResponse } from '../utils/responseParser';
@@ -85,13 +86,16 @@ const UiLibraryAssistant = () => {
     <>
       <ChatIcon onClick={toggleChat} isOpen={isOpen} />
       {isOpen && (
-        <ChatPanel
-          messages={displayMessages}
-          isStreaming={isStreaming}
-          streamBlocks={streamBlocks}
-          onSend={handleSend}
-          onClose={toggleChat}
-        />
+        // Suspense fallback displays a loading spinner or simple fallback while ChatPanel chunk loads
+        <Suspense fallback={<div className="flex justify-center items-center h-64 text-gray-500">Loading chat...</div>}>
+          <ChatPanel
+            messages={displayMessages}
+            isStreaming={isStreaming}
+            streamBlocks={streamBlocks}
+            onSend={handleSend}
+            onClose={toggleChat}
+          />
+        </Suspense>
       )}
     </>
   );

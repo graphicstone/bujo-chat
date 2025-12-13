@@ -78,6 +78,52 @@ Try asking the assistant:
 
 The assistant will respond with streaming text and render interactive components directly in the chat.
 
+## 🌐 Embeddable Bundle & External Usage
+
+You can use the assistant as a drop-in widget in other apps/sites, not just via React imports!
+
+### Build for Embeddable Usage
+
+```bash
+npm run build  # or npx vite build
+```
+Embeddable builds will output to `dist-widget/`:
+- `ui-library-assistant.umd.js` – UMD (for script inclusion)
+- `ui-library-assistant.es.js` – ESM (for import)
+
+### Using as a UMD/CDN Script (Non-React Host)
+
+```html
+<!-- On host site, must include React and ReactDOM globally! -->
+<script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="/dist-widget/ui-library-assistant.umd.js"></script>
+<script>
+  // Provide a mount node where you want the widget
+  const mountNode = document.getElementById('ui-library-chat-root');
+  // Render using exported UiLibraryAssistant from window
+  ReactDOM.render(
+    React.createElement(window.UiLibraryAssistant),
+    mountNode
+  );
+</script>
+<div id="ui-library-chat-root"></div>
+```
+
+### Using as ESM (in Modern React App)
+
+```js
+import UiLibraryAssistant from './dist-widget/ui-library-assistant.es.js';
+...
+<UiLibraryAssistant />
+```
+
+### CSS & Integration Notes
+- Widget styles (Tailwind, etc.) included in the bundle, but may need to be included in host app's build pipeline depending on your setup.
+- For complete style isolation, consider wrapping in a Shadow DOM. Contact maintainers for next steps!
+
+---
+
 ## 🏗️ Architecture & Approach
 
 ### Component Structure

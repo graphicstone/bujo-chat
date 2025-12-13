@@ -3,9 +3,10 @@
  * Scrollable container for chat messages
  */
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, lazy, Suspense } from 'react';
 import MessageBubble from './MessageBubble';
-import ReactMarkdown from 'react-markdown';
+// Lazy load ReactMarkdown for efficient bundle splitting
+const ReactMarkdown = lazy(() => import('react-markdown'));
 import ComponentRenderer from './ComponentRenderer';
 
 const MessageList = ({ messages, isStreaming, streamBlocks }) => {
@@ -26,8 +27,14 @@ const MessageList = ({ messages, isStreaming, streamBlocks }) => {
     <div className="space-y-2">
       {blocks.map((block, i) => {
         if (block.type === 'markdown') {
-          // Render markdown
-          return <div key={i} className="text-xs md:text-sm whitespace-pre-wrap break-words"><ReactMarkdown>{block.content}</ReactMarkdown></div>;
+          // Lazy load and suspense fallback for Markdown rendering
+          return (
+            <div key={i} className="text-xs md:text-sm whitespace-pre-wrap break-words">
+              <Suspense fallback={<span>Loading…</span>}>
+                <ReactMarkdown>{block.content}</ReactMarkdown>
+              </Suspense>
+            </div>
+          );
         }
         if (block.type === 'json') {
           // Render interactive component via ComponentRenderer

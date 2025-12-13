@@ -43,6 +43,7 @@ This direction enables the assistant to return mixed Markdown and JSON blocks th
   - Separation of concerns: Parser (`responseParser.js`), Renderer (`ComponentRenderer.jsx`), and Streaming logic
   - Extensible component system - easy to add new component types
   - Well-commented code for maintainability
+  - **Unit tests** for critical parsing and rendering logic
 - **Performance**: 
   - Efficient streaming parser with O(n) complexity
   - Lazy loading of heavy dependencies (ReactMarkdown)
@@ -51,6 +52,7 @@ This direction enables the assistant to return mixed Markdown and JSON blocks th
   - Clear code structure and comments
   - Consistent patterns across components
   - Easy to extend with new component types
+  - **Unit tests** for critical parsing and rendering logic (32 test cases)
 
 ### Direction C: Bundle Splitting & Embeddable Performance
 **Status:** ✅ Implemented
@@ -71,6 +73,8 @@ This direction focuses on making the widget truly embeddable and production-read
 
 - **React 19** - UI framework
 - **Vite** - Build tool and dev server
+- **Vitest** - Testing framework
+- **React Testing Library** - Component testing utilities
 - **Tailwind CSS** - Styling
 - **localStorage API** - Persistence
 
@@ -297,6 +301,52 @@ These serve as examples - the system can be extended to support any component li
    npm run lint
    ```
 
+7. **Run tests:**
+   ```bash
+   npm test
+   ```
+
+### Testing
+
+The project includes unit tests for critical functionality:
+
+```bash
+# Run tests
+npm test
+
+# Run tests in watch mode
+npm test -- --watch
+
+# Run tests with UI
+npm run test:ui
+
+# Run tests with coverage
+npm run test:coverage
+```
+
+**Test Coverage:**
+- ✅ `responseParser.js` - Streaming Markdown + JSON parser (10 test cases)
+  - Markdown-only parsing
+  - JSON block extraction
+  - Incomplete JSON buffering
+  - Multiple JSON blocks
+  - Nested JSON structures
+  - Error handling for malformed JSON
+- ✅ `ChatInput.jsx` - Character limit validation and input handling (11 test cases)
+  - Character count display
+  - 200 character limit enforcement
+  - Warning states (near limit, at limit)
+  - Form submission validation
+  - Disabled state handling
+- ✅ `ComponentRenderer.jsx` - Dynamic component rendering (11 test cases)
+  - Button group rendering
+  - Chat examples rendering
+  - Form rendering
+  - List rendering (ordered/unordered)
+  - Error handling for unknown types
+
+Tests are written using **Vitest** and **React Testing Library** for comprehensive coverage of critical functionality.
+
 ## ⚠️ Assumptions, Trade-offs, and Limitations
 
 ### Assumptions
@@ -366,10 +416,11 @@ These serve as examples - the system can be extended to support any component li
    - Screen reader support
    - Focus management
 
-6. **No Testing**: No unit or integration tests included. Production would require:
-   - Component tests (React Testing Library)
-   - Parser logic tests
-   - E2E tests for critical flows
+6. **Limited Testing**: Basic unit tests are included for critical components (parser, input validation, component rendering). Production would require:
+   - More comprehensive test coverage (currently 32 test cases)
+   - Integration tests for full user flows
+   - E2E tests for critical paths
+   - Visual regression tests
 
 7. **Generic Query Understanding**: While fuzzy matching helps, the system uses keyword-based matching rather than true NLP. Complex queries may not be understood correctly.
 

@@ -176,7 +176,7 @@ export function parseStreamedAssistantResponse(incomingText, previousBuffer = ''
         // Valid JSON but not a component definition, treat as markdown
         blocks.push({ type: 'markdown', content: jsonFragment, raw: jsonFragment });
       }
-    } catch (err) {
+    } catch {
       // Invalid JSON, emit as markdown
       blocks.push({ type: 'markdown', content: jsonFragment, raw: jsonFragment });
     }

@@ -139,7 +139,7 @@ You can use the assistant as a drop-in widget in other apps/sites, not just via 
 ### Build for Embeddable Usage
 
 ```bash
-npm run build  # or npx vite build
+npm run build:lib
 ```
 Embeddable builds will output to `dist-widget/`:
 - `ui-library-assistant.umd.js` – UMD (for script inclusion)
@@ -286,22 +286,29 @@ These serve as examples - the system can be extended to support any component li
 3. **Open browser:**
    Navigate to the URL shown in terminal (typically `http://localhost:5173`)
 
-4. **Build for production:**
+4. **Build for production (app deployment):**
    ```bash
    npm run build
    ```
+   This creates a `dist/` directory for deployment (Vercel, Netlify, etc.)
 
-5. **Preview production build:**
+5. **Build for embeddable widget library:**
+   ```bash
+   npm run build:lib
+   ```
+   This creates a `dist-widget/` directory with UMD/ESM bundles for embedding
+
+6. **Preview production build:**
    ```bash
    npm run preview
    ```
 
-6. **Run linter:**
+7. **Run linter:**
    ```bash
    npm run lint
    ```
 
-7. **Run tests:**
+8. **Run tests:**
    ```bash
    npm test
    ```

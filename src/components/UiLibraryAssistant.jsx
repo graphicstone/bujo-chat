@@ -20,8 +20,6 @@ const UiLibraryAssistant = () => {
   const [isStreaming, setIsStreaming] = useState(false);
   // Store currently streaming blocks (markdown/json objects)
   const [streamBlocks, setStreamBlocks] = useState([]);
-  // Buffer for incomplete chunk (for streaming JSON)
-  const [streamBuffer, setStreamBuffer] = useState('');
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -38,19 +36,16 @@ const UiLibraryAssistant = () => {
     setMessages((prev) => [...prev, userMsg]);
     setIsStreaming(true);
     setStreamBlocks([]);
-    setStreamBuffer('');
 
     await new Promise(resolve => setTimeout(resolve, MOCK_API_DELAY));
 
-    let streamAccum = '';
     let buffer = '';
     let allBlocks = [];
     
     await streamResponse(
       userMessage,
       (chunk) => {
-        // On each chunk, accumulate; parse completed blocks
-        streamAccum += chunk;
+        // On each chunk, parse completed blocks
         const [parsedBlocks, remaining] = parseStreamedAssistantResponse(chunk, buffer);
         buffer = remaining;
         if (parsedBlocks.length > 0) {
@@ -58,9 +53,8 @@ const UiLibraryAssistant = () => {
           // Display all blocks + show partial
           setStreamBlocks([...allBlocks]);
         }
-        setStreamBuffer(buffer);
       },
-      ({ fullText }) => {
+      () => {
         // On completion: parse any remaining buffer
         const [finalBlocks] = parseStreamedAssistantResponse('', buffer);
         const completeBlocks = [...allBlocks, ...finalBlocks];
@@ -68,7 +62,6 @@ const UiLibraryAssistant = () => {
         setMessages(prev => [...prev, { role: 'assistant', blocks: completeBlocks }]);
         setIsStreaming(false);
         setStreamBlocks([]);
-        setStreamBuffer('');
       }
     );
   }, []);

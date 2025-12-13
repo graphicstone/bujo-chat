@@ -6,7 +6,7 @@
 import MessageList from './MessageList';
 import ChatInput from './ChatInput';
 
-const ChatPanel = ({ messages, isStreaming, currentStreamingMessage, onSend, onClose }) => {
+const ChatPanel = ({ messages, isStreaming, streamBlocks, onSend, onClose }) => {
   return (
     <div className="fixed inset-0 md:inset-auto md:bottom-24 md:right-6 md:w-96 md:h-[600px] bg-white md:rounded-lg shadow-2xl flex flex-col z-40 md:border border-gray-200 animate-slide-in-from-bottom-4 animate-fade-in">
       {/* Header */}
@@ -34,7 +34,7 @@ const ChatPanel = ({ messages, isStreaming, currentStreamingMessage, onSend, onC
       </div>
 
       {/* Messages */}
-      <MessageList messages={messages} isStreaming={isStreaming} currentStreamingMessage={currentStreamingMessage} />
+      <MessageList messages={messages} isStreaming={isStreaming} streamBlocks={streamBlocks} />
 
       {/* Input */}
       <ChatInput onSend={onSend} disabled={isStreaming} />

@@ -6,37 +6,19 @@
 import ButtonGroup from './ui-library/ButtonGroup';
 import ChatExamples from './ui-library/ChatExamples';
 
-const ComponentRenderer = ({ components = [] }) => {
-  if (!components || components.length === 0) {
-    return null;
-  }
+const ComponentRenderer = ({ jsonBlock }) => {
+  if (!jsonBlock || !jsonBlock.type) return null;
 
-  return (
-    <div className="mt-4 space-y-4">
-      {components.map((component, index) => {
-        switch (component.type) {
-          case 'button-group':
-            return (
-              <ButtonGroup
-                key={index}
-                buttons={component.elements}
-              />
-            );
-          
-          case 'chat-examples':
-            return (
-              <ChatExamples
-                key={index}
-                bubbles={component.elements}
-              />
-            );
-          
-          default:
-            return null;
-        }
-      })}
-    </div>
-  );
+  switch (jsonBlock.type) {
+    case 'button-group':
+      // Render a ButtonGroup given array of variants from new JSON format
+      return <ButtonGroup buttons={(jsonBlock.variants || []).map((variant) => ({ variant, text: variant.charAt(0).toUpperCase() + variant.slice(1) }))} />;
+    case 'chat-examples':
+      // Render example chat bubbles using array of bubble objects
+      return <ChatExamples bubbles={jsonBlock.bubbles || []} />;
+    default:
+      return null;
+  }
 };
 
 export default ComponentRenderer;

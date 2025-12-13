@@ -9,7 +9,7 @@ import ChatIcon from './ChatIcon';
 import ChatPanel from './ChatPanel';
 import { streamResponse } from '../services/mockStreamingAPI';
 import { saveChatHistory, loadChatHistory } from '../services/storageService';
-import { parseResponse } from '../utils/responseParser';
+import { parseStreamedAssistantResponse } from '../utils/responseParser';
 
 const MOCK_API_DELAY = 1500;
 
@@ -17,7 +17,10 @@ const UiLibraryAssistant = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState(() => loadChatHistory());
   const [isStreaming, setIsStreaming] = useState(false);
-  const [currentStreamingMessage, setCurrentStreamingMessage] = useState(null);
+  // Store currently streaming blocks (markdown/json objects)
+  const [streamBlocks, setStreamBlocks] = useState([]);
+  // Buffer for incomplete chunk (for streaming JSON)
+  const [streamBuffer, setStreamBuffer] = useState('');
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -25,39 +28,46 @@ const UiLibraryAssistant = () => {
     }
   }, [messages]);
 
+  // Handle Send: send user message, stream with block parsing
   const handleSend = useCallback(async (userMessage) => {
     const userMsg = {
       role: 'user',
-      text: userMessage,
-      components: []
+      text: userMessage
     };
-    
     setMessages((prev) => [...prev, userMsg]);
     setIsStreaming(true);
-    setCurrentStreamingMessage('');
+    setStreamBlocks([]);
+    setStreamBuffer('');
 
     await new Promise(resolve => setTimeout(resolve, MOCK_API_DELAY));
 
-    let accumulatedText = '';
+    let streamAccum = '';
+    let buffer = '';
+    let allBlocks = [];
     
     await streamResponse(
       userMessage,
       (chunk) => {
-        accumulatedText += chunk;
-        setCurrentStreamingMessage(accumulatedText);
+        // On each chunk, accumulate; parse completed blocks
+        streamAccum += chunk;
+        const [parsedBlocks, remaining] = parseStreamedAssistantResponse(chunk, buffer);
+        buffer = remaining;
+        if (parsedBlocks.length > 0) {
+          allBlocks = [...allBlocks, ...parsedBlocks];
+          // Display all blocks + show partial
+          setStreamBlocks([...allBlocks]);
+        }
+        setStreamBuffer(buffer);
       },
       ({ fullText }) => {
-        const parsed = parseResponse(fullText);
-        
-        const assistantMsg = {
-          role: 'assistant',
-          text: parsed.text,
-          components: parsed.components
-        };
-        
-        setMessages((prev) => [...prev, assistantMsg]);
+        // On completion: parse any remaining buffer
+        const [finalBlocks] = parseStreamedAssistantResponse('', buffer);
+        const completeBlocks = [...allBlocks, ...finalBlocks];
+        // Commit full parsed assistant message
+        setMessages(prev => [...prev, { role: 'assistant', blocks: completeBlocks }]);
         setIsStreaming(false);
-        setCurrentStreamingMessage(null);
+        setStreamBlocks([]);
+        setStreamBuffer('');
       }
     );
   }, []);
@@ -66,8 +76,9 @@ const UiLibraryAssistant = () => {
     setIsOpen((prev) => !prev);
   };
 
-  const displayMessages = isStreaming && currentStreamingMessage
-    ? [...messages, { role: 'assistant', text: currentStreamingMessage, components: [] }]
+  // While streaming: show current streamBlocks as a 'streaming' assistant message
+  const displayMessages = isStreaming && streamBlocks.length > 0
+    ? [...messages, { role: 'assistant', blocks: streamBlocks }]
     : messages;
 
   return (
@@ -77,7 +88,7 @@ const UiLibraryAssistant = () => {
         <ChatPanel
           messages={displayMessages}
           isStreaming={isStreaming}
-          currentStreamingMessage={currentStreamingMessage}
+          streamBlocks={streamBlocks}
           onSend={handleSend}
           onClose={toggleChat}
         />

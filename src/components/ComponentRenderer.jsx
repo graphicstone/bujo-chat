@@ -5,6 +5,8 @@
 
 import ButtonGroup from './ui-library/ButtonGroup';
 import ChatExamples from './ui-library/ChatExamples';
+import Form from './ui-library/Form';
+import List from './ui-library/List';
 
 const ComponentRenderer = ({ jsonBlock }) => {
   if (!jsonBlock || !jsonBlock.type) return null;
@@ -16,6 +18,12 @@ const ComponentRenderer = ({ jsonBlock }) => {
     case 'chat-examples':
       // Render example chat bubbles using array of bubble objects
       return <ChatExamples bubbles={jsonBlock.bubbles || []} />;
+    case 'form':
+      // Render form with input fields and submit button
+      return <Form fields={jsonBlock.fields || []} submitText={jsonBlock.submitText || 'Submit'} />;
+    case 'list':
+      // Render ordered or unordered list
+      return <List items={jsonBlock.items || []} ordered={jsonBlock.ordered || false} style={jsonBlock.style || 'default'} />;
     default:
       return null;
   }

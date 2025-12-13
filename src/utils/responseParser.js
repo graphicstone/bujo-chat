@@ -81,50 +81,126 @@ const parseComponentElements = (content, componentType) => {
  *   const [blocks, remainingBuffer] = parseStreamedAssistantResponse(newChunk, previousBuffer);
  */
 
+/**
+ * Find balanced JSON blocks by counting braces
+ * @param {string} text - Text to search
+ * @returns {Array} Array of {start, end, content} for each JSON block
+ */
+function findJsonBlocks(text) {
+  const blocks = [];
+  let i = 0;
+  
+  while (i < text.length) {
+    // Find opening brace
+    if (text[i] === '{') {
+      let braceCount = 0;
+      let start = i;
+      let inString = false;
+      let escapeNext = false;
+      
+      // Count braces to find matching closing brace
+      for (let j = i; j < text.length; j++) {
+        const char = text[j];
+        
+        if (escapeNext) {
+          escapeNext = false;
+          continue;
+        }
+        
+        if (char === '\\') {
+          escapeNext = true;
+          continue;
+        }
+        
+        if (char === '"') {
+          inString = !inString;
+          continue;
+        }
+        
+        if (!inString) {
+          if (char === '{') {
+            braceCount++;
+          } else if (char === '}') {
+            braceCount--;
+            if (braceCount === 0) {
+              // Found complete JSON block
+              const content = text.slice(start, j + 1);
+              blocks.push({ start, end: j + 1, content });
+              i = j + 1;
+              break;
+            }
+          }
+        }
+      }
+      
+      // If we didn't find a closing brace, this might be incomplete JSON
+      if (braceCount > 0) {
+        // Return incomplete block info for buffering
+        return { blocks, incompleteStart: start };
+      }
+    }
+    i++;
+  }
+  
+  return { blocks, incompleteStart: -1 };
+}
+
 export function parseStreamedAssistantResponse(incomingText, previousBuffer = '') {
   // Buffer the incoming text
   let buffer = previousBuffer + incomingText;
   const blocks = [];
 
-  // Regular expression to locate JSON blocks (start and end with curly braces)
-  const jsonBlockRegex = /{[\s\S]*?}/gm;
+  // Find all JSON blocks using balanced brace matching
+  const { blocks: jsonBlocks, incompleteStart } = findJsonBlocks(buffer);
 
-  let match;
   let lastIndex = 0;
 
-  // Extract all JSON blocks
-  while ((match = jsonBlockRegex.exec(buffer)) !== null) {
-    const jsonStart = match.index;
-    const jsonEnd = jsonBlockRegex.lastIndex;
-
+  // Process each JSON block
+  for (const jsonMatch of jsonBlocks) {
     // Markdown between previous index and this JSON
-    if (jsonStart > lastIndex) {
-      const markdownFragment = buffer.slice(lastIndex, jsonStart).trim();
+    if (jsonMatch.start > lastIndex) {
+      const markdownFragment = buffer.slice(lastIndex, jsonMatch.start).trim();
       if (markdownFragment) {
         blocks.push({ type: 'markdown', content: markdownFragment, raw: markdownFragment });
       }
     }
 
-    // The JSON block itself
-    const jsonFragment = match[0];
+    // Try to parse the JSON block
+    const jsonFragment = jsonMatch.content;
     try {
-      blocks.push({ type: 'json', content: JSON.parse(jsonFragment), raw: jsonFragment });
+      const parsed = JSON.parse(jsonFragment);
+      // Only treat as JSON component if it's an object with a 'type' field
+      if (typeof parsed === 'object' && parsed !== null && parsed.type) {
+        blocks.push({ type: 'json', content: parsed, raw: jsonFragment });
+      } else {
+        // Valid JSON but not a component definition, treat as markdown
+        blocks.push({ type: 'markdown', content: jsonFragment, raw: jsonFragment });
+      }
     } catch (err) {
-      // Malformed or partial JSON: emit as markdown with error
-      blocks.push({ type: 'markdown', content: jsonFragment, raw: jsonFragment, error: 'invalid-json' });
+      // Invalid JSON, emit as markdown
+      blocks.push({ type: 'markdown', content: jsonFragment, raw: jsonFragment });
     }
 
-    lastIndex = jsonEnd;
+    lastIndex = jsonMatch.end;
   }
 
-  // Any trailing markdown (or possibly incomplete JSON)
+  // Handle incomplete JSON (if we found an opening brace but no closing)
+  if (incompleteStart >= 0) {
+    const trailingFragment = buffer.slice(incompleteStart).trim();
+    // Check if there's markdown before the incomplete JSON
+    if (incompleteStart > lastIndex) {
+      const markdownFragment = buffer.slice(lastIndex, incompleteStart).trim();
+      if (markdownFragment) {
+        blocks.push({ type: 'markdown', content: markdownFragment, raw: markdownFragment });
+      }
+    }
+    // Return incomplete JSON in buffer for next chunk
+    return [blocks, trailingFragment];
+  }
+
+  // Any trailing markdown
   if (lastIndex < buffer.length) {
     const trailingFragment = buffer.slice(lastIndex).trim();
-    // Buffer unfinished JSON (starts with { with no ending }), else emit as markdown
-    if (trailingFragment.startsWith('{') && !trailingFragment.endsWith('}')) {
-      // Incomplete JSON, save for next call
-      return [blocks, trailingFragment];
-    }
     if (trailingFragment) {
       blocks.push({ type: 'markdown', content: trailingFragment, raw: trailingFragment });
     }
